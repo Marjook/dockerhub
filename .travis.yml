@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t marjook/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true marjook/react-test npm test
+
+after_success:
+  - docker build -t marjook/multi-client ./client
+  - docker build -t marjook/multi-nginx ./nginx
+  - docker build -t marjook/multi-server ./server
+  - docker build -t marjook/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push marjook/multi-client
+  - docker push marjook/multi-nginx
+  - docker push marjook/multi-server
+  - docker push marjook/multi-worker
